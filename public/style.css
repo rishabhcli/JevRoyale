@@ -1,0 +1,171 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #0b0820; font-family: 'Nunito', sans-serif; user-select: none; color: #fff; }
+#game-root, #game-root canvas { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+.hidden { display: none !important; }
+
+:root {
+  --outline: 0 3px 0 #1b0b3a, 2px 2px 0 #1b0b3a, -2px 2px 0 #1b0b3a, 2px -2px 0 #1b0b3a, -2px -2px 0 #1b0b3a;
+  --pink: #ff3fa4; --yellow: #ffd23f; --cyan: #3ff2ff; --purple: #7b2cff;
+}
+
+/* ---------- screens ---------- */
+.screen { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 50;
+  background: radial-gradient(ellipse at center, rgba(123,44,255,0.35), rgba(10,4,30,0.85)); }
+.start-card { text-align: center; padding: 36px 48px 30px; border-radius: 28px; max-width: 760px;
+  background: linear-gradient(160deg, rgba(40,20,90,0.92), rgba(20,8,50,0.95));
+  border: 5px solid #1b0b3a; box-shadow: 0 10px 0 #1b0b3a, 0 0 60px rgba(255,63,164,0.35); }
+.start-card.small { padding: 26px 40px; }
+.title { font-family: 'Luckiest Guy', 'Bungee', cursive; font-size: 104px; line-height: 1; letter-spacing: 3px;
+  background: linear-gradient(180deg, #fff36b 0%, #ffb21f 45%, #ff4f8b 100%); -webkit-background-clip: text; background-clip: text;
+  color: transparent; -webkit-text-stroke: 4px #1b0b3a; filter: drop-shadow(0 7px 0 #1b0b3a); transform: rotate(-3deg);
+  animation: titleBob 2.4s ease-in-out infinite; }
+.title.small { font-size: 64px; }
+@keyframes titleBob { 0%,100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(-1deg) translateY(-6px); } }
+.tagline { font-family: 'Bungee', cursive; font-size: 26px; margin: 14px 0 22px; color: var(--cyan); text-shadow: var(--outline); }
+.controls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 26px; text-align: left; margin: 0 auto 26px; max-width: 560px;
+  font-size: 16px; font-weight: 700; color: #e5dcff; }
+.controls b { font-family: 'Bungee', cursive; font-weight: 400; color: var(--yellow); margin-right: 4px; }
+.big-btn { font-family: 'Luckiest Guy', cursive; font-size: 46px; letter-spacing: 2px; padding: 14px 64px 8px; cursor: pointer;
+  color: #1b0b3a; border: 5px solid #1b0b3a; border-radius: 20px;
+  background: linear-gradient(180deg, #fff36b, #ffb21f 60%, #ff8a1f); box-shadow: 0 8px 0 #1b0b3a; transition: transform .08s, box-shadow .08s; }
+.big-btn:hover { transform: translateY(-3px) scale(1.04); box-shadow: 0 11px 0 #1b0b3a; }
+.big-btn:active { transform: translateY(5px); box-shadow: 0 3px 0 #1b0b3a; }
+.hint { margin-top: 18px; font-size: 14px; color: #b8a8e8; }
+.stats { display: flex; gap: 16px; justify-content: center; margin: 10px 0 28px; }
+.stat { display: flex; flex-direction: column; align-items: center; min-width: 120px; padding: 12px 10px; border-radius: 16px;
+  background: rgba(0,0,0,0.3); border: 3px solid #1b0b3a; }
+.stat .v { font-family: 'Luckiest Guy', cursive; font-size: 44px; color: var(--yellow); text-shadow: var(--outline); }
+.stat .k { font-family: 'Bungee', cursive; font-size: 13px; color: #cbbcff; }
+#end-screen.defeat .title { background: linear-gradient(180deg, #ffd0e0, #ff4f6b 50%, #a0105a); -webkit-background-clip: text; background-clip: text; }
+
+/* ---------- HUD ---------- */
+#hud { position: fixed; inset: 0; pointer-events: none; z-index: 10; }
+#vignette { position: absolute; inset: 0; opacity: 0; transition: opacity .25s;
+  background: radial-gradient(ellipse at center, transparent 45%, rgba(255,0,40,0.75) 100%); }
+#storm-overlay { position: absolute; inset: 0; opacity: 0; transition: opacity .6s;
+  background: radial-gradient(ellipse at center, rgba(140,40,255,0.12) 30%, rgba(120,20,220,0.6) 100%); }
+#storm-overlay.on { opacity: 1; animation: stormPulse 1.2s ease-in-out infinite; }
+@keyframes stormPulse { 50% { opacity: .7; } }
+
+#crosshair { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+#crosshair .ch { position: absolute; background: #fff; box-shadow: 0 0 0 1.5px #1b0b3a; border-radius: 2px; }
+#crosshair .ch-t, #crosshair .ch-b { width: 3px; height: 10px; left: -1.5px; }
+#crosshair .ch-l, #crosshair .ch-r { width: 10px; height: 3px; top: -1.5px; }
+#crosshair .ch-t { top: calc(-14px - var(--spread, 0px)); }
+#crosshair .ch-b { top: calc(4px + var(--spread, 0px)); }
+#crosshair .ch-l { left: calc(-14px - var(--spread, 0px)); }
+#crosshair .ch-r { left: calc(4px + var(--spread, 0px)); }
+#crosshair .ch-dot { position: absolute; width: 4px; height: 4px; left: -2px; top: -2px; background: #fff; border-radius: 50%; box-shadow: 0 0 0 1px #1b0b3a; }
+#crosshair.build .ch { opacity: .35; }
+#hitmarker { position: absolute; left: 0; top: 0; opacity: 0; transition: opacity .12s; }
+#hitmarker i { position: absolute; width: 3px; height: 12px; background: #fff; box-shadow: 0 0 0 1px #000; border-radius: 2px; }
+#hitmarker i:nth-child(1) { transform: translate(-9px,-15px) rotate(-45deg); }
+#hitmarker i:nth-child(2) { transform: translate(7px,-15px) rotate(45deg); }
+#hitmarker i:nth-child(3) { transform: translate(-9px,4px) rotate(45deg); }
+#hitmarker i:nth-child(4) { transform: translate(7px,4px) rotate(-45deg); }
+#hitmarker.show { opacity: 1; transition: none; }
+#hitmarker.headshot i { background: var(--yellow); }
+
+#top-left { position: absolute; left: 20px; top: 18px; display: flex; gap: 10px; }
+#alive-box, #kills-box { display: flex; flex-direction: column; align-items: center; padding: 6px 16px 4px; border-radius: 14px;
+  background: linear-gradient(180deg, rgba(60,20,120,.85), rgba(25,8,60,.85)); border: 3px solid #1b0b3a; box-shadow: 0 4px 0 #1b0b3a; }
+.label { font-family: 'Bungee', cursive; font-size: 12px; color: var(--cyan); }
+#alive-count, #kill-count { font-family: 'Luckiest Guy', cursive; font-size: 38px; line-height: 1; color: var(--yellow); text-shadow: var(--outline); }
+#alive-count.bump, #kill-count.bump { animation: bump .4s; }
+@keyframes bump { 30% { transform: scale(1.5); color: var(--pink); } }
+
+#top-right { position: absolute; right: 18px; top: 16px; width: 210px; display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+#minimap { width: 200px; height: 200px; border-radius: 16px; border: 4px solid #1b0b3a; box-shadow: 0 5px 0 #1b0b3a; background: #2a5a2a; }
+#storm-info { width: 200px; text-align: center; padding: 4px 8px; border-radius: 12px; background: rgba(60,15,110,.85); border: 3px solid #1b0b3a; }
+#storm-phase { font-family: 'Bungee', cursive; font-size: 12px; color: #e2b8ff; }
+#storm-timer { font-family: 'Luckiest Guy', cursive; font-size: 26px; line-height: 1.05; text-shadow: var(--outline); }
+#storm-info.shrinking #storm-timer { color: #ff7bf1; }
+#killfeed { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 4px; }
+.kf { font-family: 'Bungee', cursive; font-size: 13px; padding: 4px 10px; border-radius: 10px; background: rgba(15,5,35,.75); border: 2px solid #1b0b3a;
+  white-space: nowrap; animation: slideIn .25s ease-out; transition: opacity .5s; }
+.kf.you { background: linear-gradient(90deg, rgba(255,63,164,.85), rgba(255,178,31,.85)); color: #1b0b3a; }
+@keyframes slideIn { from { transform: translateX(40px); opacity: 0; } }
+
+#chatlog { position: absolute; left: 20px; bottom: 132px; width: 420px; display: flex; flex-direction: column; gap: 4px; }
+.chat { font-size: 15px; font-weight: 700; padding: 5px 10px; border-radius: 10px; background: rgba(10,4,30,.62); text-shadow: 0 1px 2px #000;
+  animation: slideUp .25s ease-out; transition: opacity .8s; }
+.chat b { font-family: 'Bungee', cursive; font-weight: 400; margin-right: 6px; }
+@keyframes slideUp { from { transform: translateY(14px); opacity: 0; } }
+
+#bubbles { position: absolute; inset: 0; overflow: hidden; }
+.bubble { position: absolute; left: 0; top: 0; max-width: 240px; padding: 7px 12px; border-radius: 16px; background: #fff; color: #1b0b3a;
+  font-size: 14px; font-weight: 900; border: 3px solid #1b0b3a; box-shadow: 0 4px 0 rgba(27,11,58,.6); white-space: normal;
+  transform-origin: 50% 100%; animation: pop .25s cubic-bezier(.3,1.8,.5,1); }
+.bubble::after { content: ''; position: absolute; left: 50%; bottom: -12px; margin-left: -8px; border: 8px solid transparent; border-top-color: #1b0b3a; }
+.bubble .bn { display: block; font-family: 'Bungee', cursive; font-weight: 400; font-size: 11px; }
+@keyframes pop { from { scale: 0.2; } }
+
+#damage-indicators { position: absolute; left: 50%; top: 50%; width: 0; height: 0; }
+.dmg-ind { position: absolute; left: -60px; top: -170px; width: 120px; height: 40px; transform-origin: 60px 170px; transition: opacity .9s;
+  background: radial-gradient(ellipse at 50% 100%, rgba(255,40,60,.95), rgba(255,40,60,0) 70%); border-radius: 50% 50% 0 0; }
+
+#bottom-center { position: absolute; left: 20px; bottom: 24px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+#mode-text { position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); white-space: nowrap;
+  font-family: 'Bungee', cursive; font-size: 15px; color: var(--cyan); text-shadow: var(--outline); }
+#bars { display: flex; flex-direction: column; gap: 6px; width: 340px; }
+.bar-row { display: flex; align-items: center; gap: 6px; }
+.bar-icon { width: 30px; height: 30px; border-radius: 8px; border: 3px solid #1b0b3a; display: flex; align-items: center; justify-content: center;
+  font-family: 'Luckiest Guy', cursive; font-size: 22px; line-height: 1; }
+.shield-icon { background: #3fa9ff; } .health-icon { background: #3fdc6a; }
+.bar { position: relative; flex: 1; height: 26px; border-radius: 9px; border: 3px solid #1b0b3a; background: rgba(10,4,30,.7); overflow: hidden; box-shadow: 0 3px 0 #1b0b3a; }
+.bar .fill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; transition: width .2s; }
+.shield-bar .fill { background: linear-gradient(180deg, #8fd3ff, #2f8bff); }
+.health-bar .fill { background: linear-gradient(180deg, #9dff8a, #22c24a); }
+.health-bar.low .fill { background: linear-gradient(180deg, #ff9a8a, #e0223a); animation: stormPulse .6s infinite; }
+.bar span { position: absolute; right: 8px; top: 0; font-family: 'Luckiest Guy', cursive; font-size: 20px; line-height: 22px; text-shadow: var(--outline); }
+
+#bottom-right { position: absolute; right: 20px; bottom: 22px; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+#ammo-box { font-family: 'Luckiest Guy', cursive; text-shadow: var(--outline); }
+#ammo-mag { font-size: 54px; color: #fff; }
+#ammo-res { font-size: 26px; color: #cbbcff; margin-left: 6px; }
+#ammo-box.reloading #ammo-mag { color: var(--yellow); animation: stormPulse .5s infinite; }
+#hotbar { display: flex; gap: 6px; }
+.slot, .bslot { position: relative; width: 74px; height: 66px; border-radius: 12px; border: 3px solid #1b0b3a; background: rgba(20,8,50,.75);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 4px 0 #1b0b3a; transition: transform .1s; }
+.slot .key, .bslot .key { position: absolute; left: 5px; top: 2px; font-family: 'Bungee', cursive; font-size: 11px; color: #a998e0; }
+.slot .wname { font-family: 'Bungee', cursive; font-size: 12px; margin-top: 6px; }
+.slot .wammo { font-family: 'Luckiest Guy', cursive; font-size: 18px; color: var(--yellow); }
+.slot[data-slot="0"] { background: linear-gradient(180deg, rgba(130,130,150,.85), rgba(60,60,80,.85)); }
+.slot[data-slot="1"] { background: linear-gradient(180deg, rgba(80,170,255,.85), rgba(30,70,160,.85)); }
+.slot[data-slot="2"] { background: linear-gradient(180deg, rgba(90,220,110,.85), rgba(25,110,50,.85)); }
+.slot[data-slot="3"] { background: linear-gradient(180deg, rgba(190,100,255,.85), rgba(90,30,160,.85)); }
+.slot[data-slot="4"] { background: linear-gradient(180deg, rgba(255,190,60,.9), rgba(200,90,10,.9)); }
+.slot.active { transform: translateY(-8px) scale(1.08); border-color: #fff; box-shadow: 0 4px 0 #1b0b3a, 0 0 18px rgba(255,255,255,.6); }
+#build-bar { display: flex; gap: 6px; align-items: center; }
+.bslot { width: 66px; height: 40px; font-family: 'Bungee', cursive; font-size: 12px; background: linear-gradient(180deg, rgba(60,140,255,.6), rgba(20,50,140,.75)); }
+.bslot.active { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 4px 0 #1b0b3a, 0 0 16px var(--cyan); }
+#mats { display: flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 12px; border: 3px solid #1b0b3a; background: rgba(90,50,20,.85); box-shadow: 0 4px 0 #1b0b3a; }
+.mats-icon { width: 22px; height: 22px; border-radius: 4px; border: 2px solid #1b0b3a; background: repeating-linear-gradient(0deg, #d99a4e 0 5px, #a8692c 5px 7px); }
+#mats-count { font-family: 'Luckiest Guy', cursive; font-size: 24px; text-shadow: var(--outline); }
+#mats.flash { animation: bump .35s; }
+
+#center-msg { position: absolute; left: 50%; top: 58%; transform: translateX(-50%); font-family: 'Luckiest Guy', cursive; font-size: 40px;
+  color: var(--yellow); text-shadow: var(--outline); white-space: nowrap; opacity: 0; transition: opacity .4s; text-align: center; }
+#center-msg.show { opacity: 1; animation: pop .35s cubic-bezier(.3,1.8,.5,1); }
+#center-msg small { display: block; font-family: 'Bungee', cursive; font-size: 18px; color: #fff; }
+#pickup-msg { position: absolute; left: 50%; top: 70%; transform: translateX(-50%); font-family: 'Bungee', cursive; font-size: 20px;
+  color: #9dffb0; text-shadow: var(--outline); opacity: 0; transition: opacity .4s; }
+#pickup-msg.show { opacity: 1; transition: none; }
+
+@media (max-width: 1250px) {
+  #bars { width: 240px; }
+  .slot { width: 58px; height: 54px; }
+  .slot .wname { font-size: 10px; }
+  .bslot { width: 54px; height: 36px; font-size: 10px; }
+  #ammo-mag { font-size: 42px; }
+  #chatlog { width: 320px; }
+  .chat { font-size: 13px; }
+  .title { font-size: 76px; }
+}
+@media (max-width: 900px), (max-height: 640px) {
+  #minimap { width: 140px; height: 140px; }
+  #top-right, #storm-info { width: 150px; }
+  #storm-info { width: 140px; }
+  .title { font-size: 60px; }
+  .controls { font-size: 13px; }
+}

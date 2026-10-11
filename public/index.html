@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jev Royale</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Luckiest+Guy&family=Nunito:wght@700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div id="game-root"></div>
+
+  <!-- ===== HUD ===== -->
+  <div id="hud" class="hidden">
+    <div id="vignette"></div>
+    <div id="storm-overlay"></div>
+    <div id="damage-indicators"></div>
+    <div id="bubbles"></div>
+
+    <div id="crosshair">
+      <div class="ch ch-t"></div><div class="ch ch-b"></div><div class="ch ch-l"></div><div class="ch ch-r"></div>
+      <div class="ch-dot"></div>
+      <div id="hitmarker"><i></i><i></i><i></i><i></i></div>
+    </div>
+
+    <div id="top-left">
+      <div id="alive-box"><span class="label">JEVS LEFT</span><span id="alive-count">5</span></div>
+      <div id="kills-box"><span class="label">KILLS</span><span id="kill-count">0</span></div>
+    </div>
+
+    <div id="top-right">
+      <canvas id="minimap" width="200" height="200"></canvas>
+      <div id="storm-info"><div id="storm-phase">STORM FORMING</div><div id="storm-timer">0:30</div></div>
+      <div id="killfeed"></div>
+    </div>
+
+    <div id="chatlog"></div>
+
+    <div id="bottom-center">
+      <div id="mode-text"></div>
+      <div id="bars">
+        <div class="bar-row">
+          <div class="bar-icon shield-icon">&#9670;</div>
+          <div class="bar shield-bar"><div id="shield-fill" class="fill"></div><span id="shield-text">50</span></div>
+        </div>
+        <div class="bar-row">
+          <div class="bar-icon health-icon">+</div>
+          <div class="bar health-bar"><div id="health-fill" class="fill"></div><span id="health-text">100</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="bottom-right">
+      <div id="ammo-box"><span id="ammo-mag">--</span><span id="ammo-res"></span></div>
+      <div id="hotbar">
+        <div class="slot" data-slot="0"><span class="key">1</span><span class="wname">PICK</span><span class="wammo">&infin;</span></div>
+        <div class="slot" data-slot="1"><span class="key">2</span><span class="wname">RIFLE</span><span class="wammo"></span></div>
+        <div class="slot" data-slot="2"><span class="key">3</span><span class="wname">PUMP</span><span class="wammo"></span></div>
+        <div class="slot" data-slot="3"><span class="key">4</span><span class="wname">SMG</span><span class="wammo"></span></div>
+        <div class="slot" data-slot="4"><span class="key">5</span><span class="wname">ROCKET</span><span class="wammo"></span></div>
+      </div>
+      <div id="build-bar">
+        <div class="bslot" data-build="wall"><span class="key">Q</span>WALL</div>
+        <div class="bslot" data-build="ramp"><span class="key">E</span>RAMP</div>
+        <div class="bslot" data-build="floor"><span class="key">F</span>FLOOR</div>
+        <div id="mats"><span class="mats-icon"></span><span id="mats-count">100</span></div>
+      </div>
+    </div>
+
+    <div id="center-msg"></div>
+    <div id="pickup-msg"></div>
+  </div>
+
+  <!-- ===== START SCREEN ===== -->
+  <div id="start-screen" class="screen">
+    <div class="start-card">
+      <h1 class="title">JEV ROYALE</h1>
+      <div class="tagline">5 Jevs. 1 of you.</div>
+      <div class="controls">
+        <div><b>WASD</b> move</div><div><b>SHIFT</b> sprint</div>
+        <div><b>SPACE</b> jump / glide</div><div><b>C</b> crouch</div>
+        <div><b>MOUSE</b> aim / shoot</div><div><b>RMB</b> aim down sights</div>
+        <div><b>1-5 / WHEEL</b> weapons</div><div><b>R</b> reload</div>
+        <div><b>Q</b> wall &nbsp;<b>E</b> ramp &nbsp;<b>F</b> floor</div><div><b>V</b> 3rd person</div>
+      </div>
+      <button id="drop-btn" class="big-btn">DROP IN</button>
+      <div class="hint">Last one standing wins. Outrun the storm. Out-build the Jevs.</div>
+    </div>
+  </div>
+
+  <div id="pause-screen" class="screen hidden">
+    <div class="start-card small">
+      <h2 class="title small">PAUSED</h2>
+      <button id="resume-btn" class="big-btn">RESUME</button>
+    </div>
+  </div>
+
+  <!-- ===== END SCREEN ===== -->
+  <div id="end-screen" class="screen hidden">
+    <div class="start-card">
+      <h1 id="end-title" class="title">#1 JEV SLAYER!</h1>
+      <div id="end-sub" class="tagline"></div>
+      <div class="stats">
+        <div class="stat"><span class="v" id="st-place">#1</span><span class="k">PLACEMENT</span></div>
+        <div class="stat"><span class="v" id="st-kills">0</span><span class="k">ELIMS</span></div>
+        <div class="stat"><span class="v" id="st-dmg">0</span><span class="k">DAMAGE</span></div>
+        <div class="stat"><span class="v" id="st-time">0:00</span><span class="k">TIME</span></div>
+      </div>
+      <button id="again-btn" class="big-btn">PLAY AGAIN</button>
+    </div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
